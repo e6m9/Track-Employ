@@ -1,30 +1,30 @@
 USE employees;
 
-INSERT INTO department (id, name)
+INSERT INTO department (name)
 VALUES
-        (1, "player"),
-        (2, "npc"),
-        (3, "outside variable");
+        ("player"),
+        ("npc"),
+        ("outside variable");
 
-INSERT INTO role (id, title, salary, department_id)
+INSERT INTO role (title, salary, department_id)
 VALUES
-        (1, "dungeon master", 30.00, 3),
-        (2, "paladin", 30.00, 1),
-        (3, "healer", 20.00, 1),
-        (4, "mage", 40, 1),
-        (5, "shop keeper", 00.00, 2),
-        (6, "parent", 100000, 3),
-        (7, "other", 00.00, 3);
+        ("dungeon master", 30, 3),
+        ("paladin", 30, 1),
+        ("healer", 20, 1),
+        ("mage", 40, 1),
+        ("shop keeper", 0, 2),
+        ("parent", 100000, 3),
+        ("other", 0, 3);
         
 
-INSERT INTO employee (id, first_name, last_name, role_id, manager_id)
+INSERT INTO employee (first_name, last_name, role_id, manager_id)
 VALUES
-        (1, "Tim", "Savery", 1, 3),
-        (2, "Grown", "Flowers", 3, 1),
-        (3, "Lilly", "Hernandez", 6, NULL),
-        (4, "Dark", "Powr", 4, 1),
-        (5, "Lyric", "Melody", 2, 1),
-        (6, "Septic", "Tank", 7, NULL),
-        (7, "Selibate", "Do'ork", 5, 1),
-        (8, "Walter", "White", 4, 1),
-        (9, "Ayer", "Heds", 3, 1);
+        ("Tim", "Savery", 1, 3),
+        ("Grown", "Flowers", 3, 1),
+        ("Lilly", "Hernandez", 6, NULL),
+        ("Dark", "Powr", 4, 1),
+        ("Lyric", "Melody", 2, 1),
+        ("Septic", "Tank", 7, NULL),
+        ("Selibate", "Do'ork", 5, 1),
+        ("Walter", "White", 4, 1),
+        ("Ayer", "Heds", 3, 1);

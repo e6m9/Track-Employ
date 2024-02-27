@@ -15,13 +15,19 @@ const db = mysql.createConnection(
     host: 'localhost',
     user: 'root',
     password: 'BlackMoon',
-    database: 'employee_db'
+    database: 'employees_db'
   },
   console.log(`Connected to the employee_db database.`)
 );
 
-app.get('api/employee',
-)
+// db.connect((err) => {
+//   if (err) {
+//     throw err;
+//   }
+//   console.log("connected to MySql");
+// });
+
+app.get('api/employees',)
 
 // Default response for any other request (Not Found)
 app.use((req, res) => {
