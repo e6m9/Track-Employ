@@ -11,7 +11,7 @@ const db = mysql.createConnection(
     password: 'BlackMoon',
     database: 'employees_db'
   },
-  console.log(`Connected to the employee_db database.`)
+  console.log(`Connected to employees_db.`)
 );
 
 db.connect((err) => {
@@ -23,10 +23,6 @@ db.connect((err) => {
 
 
 // set inquirer questions as array variables for each table
-const deptQuestions = [
-  'please enter the name of the department...'
-];
-
 const roleQuestions = [
   'please enter the name of the role...',
   'please enter the salary of the role...',
@@ -46,49 +42,212 @@ const empRoleUpdate = [
 ]
 
 // set up startup view
-app.get('/', (req, res) => {
-  const answer = inquirer.prompt(homeQuestions) ([
+function viewHome() {
+  inquirer.prompt([
     {
       type: 'list',
       message: 'what would you like to do?',
       name: 'homeOptions',
       choices:
-      [
-        'view all departments',
-        'view all roles',
-        'view all employees',
-        'add a department',
-        'add a role',
-        'add an employee',
-        'update and employee role'
-      ],
+        [
+          'view all departments',
+          'view all roles',
+          'view all employees',
+          'add a department',
+          'add a role',
+          'add an employee',
+          'update an employee role'
+        ],
     }
   ])
-  .then((answers) => {
-    console.log(answer);
-
-    
-  })
-});
+    // handle the answers check user input against the options, then run a function based on user input
+    .then(answer => {
+      console.log(answer);
+      switch (answer.homeOptions) {
+        case 'view all departments':
+          viewDepartments();
+          break;
+        case 'view all roles':
+          viewRoles();
+          break;
+        case 'view all employees':
+          viewEmployees();
+          break;
+        case 'add a department':
+          addDepartment();
+          break;
+        case 'add a role':
+          addRole();
+          break;
+        case 'add an employee':
+          addEmployee();
+          break;
+        case 'update an employee role':
+          updateEmployee();
+          break;
+      }
+    })
+};
 
 // set up database view for departments
 function viewDepartments() {
+  const query = `SELECT * FROM department`;
+  db.query(query, (err, results) => {
+    if (err)
+      throw err;
+
+    console.log('\n');
+    console.table(results);
+
+    inquirer.prompt([
+      {
+        type: 'input',
+        name: 'return',
+        message: 'press Enter to return to the main menu...'
+      }
+    ]).then(() => {
+      viewHome();
+    })
+  });
 };
 
 // set up database view for roles
 function viewRoles() {
+  const query = `SELECT * FROM role`;
+  db.query(query, (err, results) => {
+    if (err)
+      throw err;
+
+    console.log('\n');
+    console.table(results);
+
+    inquirer.prompt([
+      {
+        type: 'input',
+        name: 'return',
+        message: 'press Enter to return to the main menu...'
+      }
+    ]).then(() => {
+      viewHome();
+    })
+  });
 };
 
 // set up database view for employees
 function viewEmployees() {
+  const query = `SELECT * FROM employee`;
+  db.query(query, (err, results) => {
+    if (err)
+      throw err;
+
+    console.log('\n');
+    console.table(results);
+
+    inquirer.prompt([
+      {
+        type: 'input',
+        name: 'return',
+        message: 'press Enter to return to the main menu...'
+      }
+    ]).then(() => {
+      viewHome();
+    })
+  });
 };
 
 // set up route for adding a department
 function addDepartment() {
+  inquirer.prompt([
+    {
+      type: 'input',
+      name: 'deptName',
+      message: 'please enter the name of the new department...',
+      validate: function (input) {
+        if (input.length === 0) {
+          return 'please enter a name for the department...'
+        }
+        return true;
+      }
+    }
+  ]).then(answer => {
+    const query = `INSERT INTO department (name)
+    VALUES (?)`;
+    db.query(query, [answer.deptName], (err, results) => {
+      if (err)
+        throw err;
+
+      console.log(`${answer.deptName} added successfully.`);
+
+      inquirer.prompt([
+        {
+          type: 'input',
+          name: 'return',
+          message: 'press Enter to return to the main menu...'
+        }
+      ]).then(() => {
+        viewHome();
+      });
+    });
+  });
 };
 
 // set up route for adding a role
 function addRole() {
+  db.query(`SELECT id, name FROM department`, (err, departments) => {
+    if (err)
+      throw err;
+
+    const deptChoices = departments.map(dept => ({
+      name: dept.name,
+      value: dept.id,
+    }));
+
+    inquirer.prompt([
+      {
+        type: 'input',
+        name: 'roleName',
+        message: roleQuestions[0],
+        validate:
+          input =>
+            input.length === 0 ? true :
+              'please enter a title for the role...',
+      },
+      {
+        type: 'input',
+        name: 'roleSalary',
+        message: roleQuestions[1],
+        validate:
+          input =>
+            !isNaN(input) ? true :
+              'please enter a salary for the role...',
+      },
+      {
+        type: 'list',
+        name: 'roleDept',
+        message: roleQuestions[2],
+        choices: deptChoices
+      },
+    ]).then(answer => {
+      const query = `INSERT INTO role (title, salary, department_id)
+    VALUES (?, ?, ?)`;
+      db.query(query, [answer.roleName, answer.roleSalary, answer.roleDept], (err, results) => {
+        if (err)
+          throw err;
+
+        console.log(`${answer.roleName} added successfully to ${answer.roleDept}.`);
+
+        inquirer.prompt([
+          {
+            type: 'input',
+            name: 'return',
+            message: 'press Enter to return to the main menu...'
+          }
+        ]).then(() => {
+          viewHome();
+        });
+      });
+    });
+  });
 };
 
 // set up route for adding an employee
