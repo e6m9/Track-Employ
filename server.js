@@ -21,7 +21,6 @@ db.connect((err) => {
   console.log("connected to MySql");
 });
 
-
 // set inquirer questions as array variables for each table
 const roleQuestions = [
   'please enter the name of the role...',
@@ -250,143 +249,53 @@ function addRole() {
 
 // set up route for adding an employee
 function addEmployee() {
-  const roleQuery = db.query('SELECT id, title FROM role', (err, roles) => {
-    if (err)
-      throw err;
+  db.query('SELECT id, title FROM role', (err, roles) => {
+    if (err) throw err;
 
     const roleChoices = roles.map(role => ({
       name: role.title,
       value: role.id,
     }));
 
-    const employeeQuery = db.query(`SELECT id, CONCAT(manager.first_name, ' ', manager.last_name) AS manager FROM employee`, (err, employees) => {
-      if (err)
-        throw err;
+    db.query('SELECT id, CONCAT(first_name, " ", last_name) AS name FROM employee WHERE manager_id IS NULL', (err, managers) => {
+      if (err) throw err;
 
-      const managerChoices = employees.map(employee => (
+      const managerChoices = managers.map(manager => ({
+        name: manager.name,
+        value: manager.id,
+      })).concat([{ name: 'No Manager', value: null }]);
+
+      inquirer.prompt([
         {
-          name: employee.name,
-          value: employee.id,
-        })).concat(
-          [
-            {
-              name: 'No Manager', value: null
-            }
-          ]);
-    })
-
-    inquirer.prompt([
-      {
-        type: 'input',
-        name: 'firstName',
-        message: emplQuestions[0],
-        validate:
-          input =>
-            input.length > 0 ? true :
-              'please enter a first name for the employee...',
-      },
-      {
-        type: 'input',
-        name: 'lastName',
-        message: emplQuestions[1],
-        validate:
-          input =>
-            input.length > 0 ? true :
-              'please enter a last name for the employee...',
-      },
-      {
-        type: 'list',
-        name: 'roleId',
-        message: emplQuestions[2],
-        choices: roleChoices,
-      },
-      {
-        type: 'list',
-        name: 'manager',
-        message: emplQuestions[3],
-        choices: managerChoices,
-      },
-    ]).then(answer => {
-      const query = `INSERT INTO employee (first_name, last_name, role_id, manager_id)
-    VALUES (?, ?, ?, ?)`;
-      db.query(query, [answer.first, answer.last, answer.roleId, answer.manager], (err, results) => {
-        if (err)
-          throw err;
-
-        console.log(`${answer.first} ${answer.last} added successfully.`);
-
-        inquirer.prompt([
-          {
-            type: 'input',
-            name: 'return',
-            message: 'press Enter to return to the main menu...'
-          }
-        ]).then(() => {
-          viewHome();
-        });
-      });
-    });
-  });
-};
-
-// set up route for updating an emoployee rold
-function updateEmployee() {
-  const employeeQuery = `SELECT id, CONCAT(first_name, '', last_name) AS name FROM employee`;
-  db.query(employeeQuery, (err, employees) => {
-    if (err)
-      throw err;
-
-    const employeeChoices = employees.map(employee =>
-    (
-      {
-        name: employee.name,
-        value: employee.id,
-      }
-    )
-    );
-
-    inquirer.prompt(
-      [
+          type: 'input',
+          name: 'firstName',
+          message: emplQuestions[0],
+          validate: input => input.length > 0 ? true : 'First name cannot be empty.',
+        },
+        {
+          type: 'input',
+          name: 'lastName',
+          message: emplQuestions[1],
+          validate: input => input.length > 0 ? true : 'Last name cannot be empty.',
+        },
         {
           type: 'list',
-          name: 'employeeId',
-          message: 'which employee would you like to update?',
-          choices: employeeChoices,
-        }
-      ]
-    ).then(employeeAnswer => {
-      const roleQuery = 'SELECT id, title FROM role';
-      db.query(roleQuery, (err, roles) => {
-        if (err)
-          throw err;
+          name: 'roleId',
+          message: emplQuestions[2],
+          choices: roleChoices,
+        },
+        {
+          type: 'list',
+          name: 'managerId',
+          message: emplQuestions[3],
+          choices: managerChoices,
+        },
+      ]).then(answers => {
+        const query = `INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)`;
+        db.query(query, [answers.firstName, answers.lastName, answers.roleId, answers.managerId], (err, results) => {
+          if (err) throw err;
 
-        const roleChoices = roles.map(role =>
-        (
-          {
-            name: roles.title,
-            value: roles.id,
-          }
-        )
-        )
-      });
-
-      inquirer.prompt(
-        [
-          {
-            type: 'list',
-            name: 'roleId',
-            message: 'select a new role for the employee',
-            choices: roleChoices,
-          }
-        ]
-      ).then(roleAnswer => {
-        const updateQuery = `UPDATE employee SET role_id = ?
-        WHERE id = ?`;
-        db.query(updateQuery, [roleAnswer.roleId, employeeAnswer.employeeId], (err, results) => {
-          if (err)
-            throw err;
-
-          console.log('employee role has been updated.');
+          console.log('Employee added successfully.');
 
           inquirer.prompt([
             {
@@ -396,6 +305,62 @@ function updateEmployee() {
             }
           ]).then(() => {
             viewHome();
+          });
+        });
+      });
+    });
+  });
+}
+
+// set up route for updating an emoployee role
+function updateEmployee() {
+  db.query('SELECT id, CONCAT(first_name, " ", last_name) AS name FROM employee', (err, employees) => {
+    if (err) throw err;
+
+    const employeeChoices = employees.map(employee => ({
+      name: employee.name,
+      value: employee.id,
+    }));
+
+    inquirer.prompt([
+      {
+        type: 'list',
+        name: 'employeeId',
+        message: empRoleUpdate[0],
+        choices: employeeChoices,
+      }
+    ]).then(employeeAnswer => {
+      db.query('SELECT id, title FROM role', (err, roles) => {
+        if (err) throw err;
+
+        const roleChoices = roles.map(role => ({
+          name: role.title,
+          value: role.id,
+        }));
+
+        inquirer.prompt([
+          {
+            type: 'list',
+            name: 'roleId',
+            message: empRoleUpdate[1],
+            choices: roleChoices,
+          }
+        ]).then(roleAnswer => {
+          const updateQuery = 'UPDATE employee SET role_id = ? WHERE id = ?';
+          db.query(updateQuery, [roleAnswer.roleId, employeeAnswer.employeeId], (err, results) => {
+            if (err) throw err;
+
+            console.log('Employee role updated successfully.');
+
+            inquirer.prompt([
+              {
+                type: 'input',
+                name: 'return',
+                message: 'press Enter to return to the main menu...'
+              }
+            ]).then(() => {
+              viewHome();
+            });
           });
         });
       });
