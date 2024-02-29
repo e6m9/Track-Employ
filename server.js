@@ -91,7 +91,7 @@ function viewHome() {
 
 // set up database view for departments
 function viewDepartments() {
-  const query = `SELECT * FROM department`;
+  const query = 'SELECT * FROM department';
   db.query(query, (err, results) => {
     if (err)
       throw err;
@@ -113,7 +113,7 @@ function viewDepartments() {
 
 // set up database view for roles
 function viewRoles() {
-  const query = `SELECT * FROM role`;
+  const query = 'SELECT * FROM role';
   db.query(query, (err, results) => {
     if (err)
       throw err;
@@ -135,7 +135,7 @@ function viewRoles() {
 
 // set up database view for employees
 function viewEmployees() {
-  const query = `SELECT * FROM employee`;
+  const query = 'SELECT * FROM employee';
   db.query(query, (err, results) => {
     if (err)
       throw err;
@@ -162,12 +162,10 @@ function addDepartment() {
       type: 'input',
       name: 'deptName',
       message: 'please enter the name of the new department...',
-      validate: function (input) {
-        if (input.length === 0) {
-          return 'please enter a name for the department...'
-        }
-        return true;
-      }
+      validate:
+        input =>
+          input.length > 0 ? true :
+            "please enter a name for the department..."
     }
   ]).then(answer => {
     const query = `INSERT INTO department (name)
@@ -193,7 +191,7 @@ function addDepartment() {
 
 // set up route for adding a role
 function addRole() {
-  db.query(`SELECT id, name FROM department`, (err, departments) => {
+  db.query('SELECT id, name FROM department', (err, departments) => {
     if (err)
       throw err;
 
@@ -209,7 +207,7 @@ function addRole() {
         message: roleQuestions[0],
         validate:
           input =>
-            input.length === 0 ? true :
+            input.length > 0 ? true :
               'please enter a title for the role...',
       },
       {
@@ -218,7 +216,7 @@ function addRole() {
         message: roleQuestions[1],
         validate:
           input =>
-            !isNaN(input) ? true :
+            !isNaN(input) && input ? true :
               'please enter a salary for the role...',
       },
       {
@@ -252,8 +250,155 @@ function addRole() {
 
 // set up route for adding an employee
 function addEmployee() {
+  const roleQuery = db.query('SELECT id, title FROM role', (err, roles) => {
+    if (err)
+      throw err;
+
+    const roleChoices = roles.map(role => ({
+      name: role.title,
+      value: role.id,
+    }));
+
+    const employeeQuery = db.query(`SELECT id, CONCAT(manager.first_name, ' ', manager.last_name) AS manager FROM employee`, (err, employees) => {
+      if (err)
+        throw err;
+
+      const managerChoices = employees.map(employee => (
+        {
+          name: employee.name,
+          value: employee.id,
+        })).concat(
+          [
+            {
+              name: 'No Manager', value: null
+            }
+          ]);
+    })
+
+    inquirer.prompt([
+      {
+        type: 'input',
+        name: 'firstName',
+        message: emplQuestions[0],
+        validate:
+          input =>
+            input.length > 0 ? true :
+              'please enter a first name for the employee...',
+      },
+      {
+        type: 'input',
+        name: 'lastName',
+        message: emplQuestions[1],
+        validate:
+          input =>
+            input.length > 0 ? true :
+              'please enter a last name for the employee...',
+      },
+      {
+        type: 'list',
+        name: 'roleId',
+        message: emplQuestions[2],
+        choices: roleChoices,
+      },
+      {
+        type: 'list',
+        name: 'manager',
+        message: emplQuestions[3],
+        choices: managerChoices,
+      },
+    ]).then(answer => {
+      const query = `INSERT INTO employee (first_name, last_name, role_id, manager_id)
+    VALUES (?, ?, ?, ?)`;
+      db.query(query, [answer.first, answer.last, answer.roleId, answer.manager], (err, results) => {
+        if (err)
+          throw err;
+
+        console.log(`${answer.first} ${answer.last} added successfully.`);
+
+        inquirer.prompt([
+          {
+            type: 'input',
+            name: 'return',
+            message: 'press Enter to return to the main menu...'
+          }
+        ]).then(() => {
+          viewHome();
+        });
+      });
+    });
+  });
 };
 
 // set up route for updating an emoployee rold
 function updateEmployee() {
-};
+  const employeeQuery = `SELECT id, CONCAT(first_name, '', last_name) AS name FROM employee`;
+  db.query(employeeQuery, (err, employees) => {
+    if (err)
+      throw err;
+
+    const employeeChoices = employees.map(employee =>
+    (
+      {
+        name: employee.name,
+        value: employee.id,
+      }
+    )
+    );
+
+    inquirer.prompt(
+      [
+        {
+          type: 'list',
+          name: 'employeeId',
+          message: 'which employee would you like to update?',
+          choices: employeeChoices,
+        }
+      ]
+    ).then(employeeAnswer => {
+      const roleQuery = 'SELECT id, title FROM role';
+      db.query(roleQuery, (err, roles) => {
+        if (err)
+          throw err;
+
+        const roleChoices = roles.map(role =>
+        (
+          {
+            name: roles.title,
+            value: roles.id,
+          }
+        )
+        )
+      });
+
+      inquirer.prompt(
+        [
+          {
+            type: 'list',
+            name: 'roleId',
+            message: 'select a new role for the employee',
+            choices: roleChoices,
+          }
+        ]
+      ).then(roleAnswer => {
+        const updateQuery = `UPDATE employee SET role_id = ?
+        WHERE id = ?`;
+        db.query(updateQuery, [roleAnswer.roleId, employeeAnswer.employeeId], (err, results) => {
+          if (err)
+            throw err;
+
+          console.log('employee role has been updated.');
+
+          inquirer.prompt([
+            {
+              type: 'input',
+              name: 'return',
+              message: 'press Enter to return to the main menu...'
+            }
+          ]).then(() => {
+            viewHome();
+          });
+        });
+      });
+    });
+  });
+}
