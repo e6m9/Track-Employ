@@ -21,6 +21,8 @@ db.connect((err) => {
   console.log("connected to MySql");
 });
 
+viewHome();
+
 // set inquirer questions as array variables for each table
 const roleQuestions = [
   'please enter the name of the role...',

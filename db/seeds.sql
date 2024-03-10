@@ -1,4 +1,4 @@
-USE employees;
+USE employees_db;
 
 INSERT INTO department (name)
 VALUES
@@ -22,7 +22,7 @@ VALUES
         ("Grown", "Flowers", 3, 1),
         ("Dark", "Powr", 4, 1),
         ("Lyric", "Melody", 2, 1),
-        ("Septic", "Tank", 7, NULL),
+        ("Septic", "Tank", 6, NULL),
         ("Selibate", "Do'ork", 5, 1),
         ("Walter", "White", 4, 1),
         ("Ayer", "Heds", 3, 1);
