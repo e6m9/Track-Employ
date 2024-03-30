@@ -1,7 +1,6 @@
 // import and require packages
 const mysql = require('mysql2');
 const inquirer = require('inquirer');
-const fs = require('fs');
 
 // Connect to database
 const db = mysql.createConnection(
@@ -114,7 +113,7 @@ function viewDepartments() {
 
 // set up database view for roles
 function viewRoles() {
-  const query = 'SELECT * FROM role';
+  const query = 'SELECT role.id, role.title, department.name AS department, role.salary FROM role LEFT JOIN department ON role.department_id = department.id'
   db.query(query, (err, results) => {
     if (err)
       throw err;
@@ -136,7 +135,7 @@ function viewRoles() {
 
 // set up database view for employees
 function viewEmployees() {
-  const query = 'SELECT * FROM employee';
+  const query = "SELECT employee.id, employee.first_name, employee.last_name, role.title, department.name AS 'department', role.salary, CONCAT(manager.first_name, ' ', manager.last_name) AS manager FROM employee LEFT JOIN employee manager ON employee.manager_id = manager.id LEFT JOIN role ON employee.role_id = role.id LEFT JOIN department ON role.department_id = department.id;"
   db.query(query, (err, results) => {
     if (err)
       throw err;
